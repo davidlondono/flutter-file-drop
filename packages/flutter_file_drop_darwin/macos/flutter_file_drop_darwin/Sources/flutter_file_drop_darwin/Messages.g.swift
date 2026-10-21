@@ -98,7 +98,8 @@ class MessagesPigeonCodec: FlutterStandardMessageCodec, @unchecked Sendable {
 
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol DropFileHostApi {
-  func readFileChunk(sessionId: String, fileHandle: String, offset: Int64, maxBytes: Int64) async throws -> FlutterStandardTypedData?
+  func readFileChunk(sessionId: String, fileHandle: String, readId: String, offset: Int64, maxBytes: Int64) async throws -> FlutterStandardTypedData?
+  func releaseFileReadStream(sessionId: String, fileHandle: String, readId: String) async throws
   func releaseSession(sessionId: String) async throws
 }
 
@@ -114,11 +115,12 @@ class DropFileHostApiSetup {
         let args = message as! [Any?]
         let sessionIdArg = args[0] as! String
         let fileHandleArg = args[1] as! String
-        let offsetArg = args[2] as! Int64
-        let maxBytesArg = args[3] as! Int64
+        let readIdArg = args[2] as! String
+        let offsetArg = args[3] as! Int64
+        let maxBytesArg = args[4] as! Int64
         Task { @MainActor in
           do {
-            let result = try await api.readFileChunk(sessionId: sessionIdArg, fileHandle: fileHandleArg, offset: offsetArg, maxBytes: maxBytesArg)
+            let result = try await api.readFileChunk(sessionId: sessionIdArg, fileHandle: fileHandleArg, readId: readIdArg, offset: offsetArg, maxBytes: maxBytesArg)
             reply(wrapResult(result))
           } catch {
             reply(wrapError(error))
@@ -127,6 +129,25 @@ class DropFileHostApiSetup {
       }
     } else {
       readFileChunkChannel.setMessageHandler(nil)
+    }
+    let releaseFileReadStreamChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.flutter_file_drop_platform_interface.DropFileHostApi.releaseFileReadStream\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      releaseFileReadStreamChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let sessionIdArg = args[0] as! String
+        let fileHandleArg = args[1] as! String
+        let readIdArg = args[2] as! String
+        Task { @MainActor in
+          do {
+            try await api.releaseFileReadStream(sessionId: sessionIdArg, fileHandle: fileHandleArg, readId: readIdArg)
+            reply(wrapResult(nil))
+          } catch {
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      releaseFileReadStreamChannel.setMessageHandler(nil)
     }
     let releaseSessionChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.flutter_file_drop_platform_interface.DropFileHostApi.releaseSession\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {

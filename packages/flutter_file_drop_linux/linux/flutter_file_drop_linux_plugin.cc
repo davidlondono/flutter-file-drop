@@ -167,9 +167,11 @@ static FlMethodErrorResponse* stream_cancel_cb(FlEventChannel* channel,
 }
 
 static void read_file_chunk(const gchar* session_id, const gchar* file_handle,
-                            int64_t offset, int64_t max_bytes,
+                            const gchar* read_id, int64_t offset,
+                            int64_t max_bytes,
                             FlutterFileDropLinuxDropFileHostApiResponseHandle* response,
                             gpointer user_data) {
+  (void)read_id;
   FlutterFileDropLinuxPlugin* self = FLUTTER_FILE_DROP_LINUX_PLUGIN(user_data);
   if (offset < 0 || max_bytes <= 0 || max_bytes > 64 * 1024) {
     flutter_file_drop_linux_drop_file_host_api_respond_read_file_chunk(response, nullptr, 0);
@@ -200,6 +202,17 @@ static void read_file_chunk(const gchar* session_id, const gchar* file_handle,
   flutter_file_drop_linux_drop_file_host_api_respond_read_file_chunk(response, bytes, static_cast<size_t>(count));
 }
 
+static void release_file_read_stream(
+    const gchar* session_id, const gchar* file_handle, const gchar* read_id,
+    FlutterFileDropLinuxDropFileHostApiResponseHandle* response,
+    gpointer user_data) {
+  (void)session_id;
+  (void)file_handle;
+  (void)read_id;
+  (void)user_data;
+  flutter_file_drop_linux_drop_file_host_api_respond_release_file_read_stream(response);
+}
+
 static void release_session(const gchar* session_id,
                             FlutterFileDropLinuxDropFileHostApiResponseHandle* response,
                             gpointer user_data) {
@@ -210,6 +223,7 @@ static void release_session(const gchar* session_id,
 
 static const FlutterFileDropLinuxDropFileHostApiVTable host_api_vtable = {
     read_file_chunk,
+    release_file_read_stream,
     release_session,
 };
 

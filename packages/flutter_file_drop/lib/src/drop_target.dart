@@ -319,6 +319,8 @@ class _DropRouter {
               sessionId: event.sessionId,
               handle: sourceItem.handle ?? '',
               readChunk: FlutterFileDropPlatform.instance.readFileChunk,
+              releaseRead:
+                  FlutterFileDropPlatform.instance.releaseFileReadStream,
             )
           : DropString(
               value: sourceItem.value ?? '',

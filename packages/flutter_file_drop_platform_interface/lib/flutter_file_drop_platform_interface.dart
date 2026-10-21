@@ -128,8 +128,16 @@ abstract class FlutterFileDropPlatform extends PlatformInterface {
   Future<Uint8List?> readFileChunk(
     String sessionId,
     String handle,
+    String readId,
     int offset,
     int maxBytes,
+  );
+
+  /// Closes a reader opened by [readFileChunk].
+  Future<void> releaseFileReadStream(
+    String sessionId,
+    String handle,
+    String readId,
   );
 
   /// Releases all temporary resources associated with [sessionId].
@@ -158,9 +166,17 @@ class MethodChannelFlutterFileDropPlatform extends FlutterFileDropPlatform {
   Future<Uint8List?> readFileChunk(
     String sessionId,
     String handle,
+    String readId,
     int offset,
     int maxBytes,
-  ) => _hostApi.readFileChunk(sessionId, handle, offset, maxBytes);
+  ) => _hostApi.readFileChunk(sessionId, handle, readId, offset, maxBytes);
+
+  @override
+  Future<void> releaseFileReadStream(
+    String sessionId,
+    String handle,
+    String readId,
+  ) => _hostApi.releaseFileReadStream(sessionId, handle, readId);
 
   @override
   Future<void> releaseSession(String sessionId) =>

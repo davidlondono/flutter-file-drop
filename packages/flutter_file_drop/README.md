@@ -15,7 +15,7 @@ The package does not start outgoing drags, fetch URI values, traverse directorie
 ## Requirements
 
 - Flutter 3.44 or later; Dart 3.12 or later.
-- Android API 24+, iOS 15+, and macOS 12+ for native builds.
+- Android API 24+, iOS 13+, and macOS 12+ for native builds.
 
 Add the dependency:
 
@@ -61,7 +61,7 @@ DropTarget(
 )
 ```
 
-`DropFile.openRead()` yields bounded 64 KiB chunks. `readAsBytes()` reads the full file into memory. Keep file reads inside the awaited `onDrop` callback; native file access ends when that callback completes. `DropFile.path` can be null, and applications should use `openRead()` for portable access.
+`DropFile.openRead()` yields bounded 64 KiB chunks. Pass `maxBytes` to enforce a limit against bytes actually read; the reader may inspect one additional byte to detect overflow. `DropConstraints.maxFileSizeBytes` screens reported metadata only. `readAsBytes()` reads the full file into memory unless `maxBytes` is set. Keep file reads inside the awaited `onDrop` callback; native file access ends when that callback completes. `DropFile.path` can be null, and applications should use `openRead()` for portable access.
 
 `DropPreview` and `DropResult` expose global and local positions. `DropResult.items` keeps source order and includes accepted and rejected items. The `accepted` and `rejected` getters are filtered views.
 
@@ -72,7 +72,8 @@ DropTarget(
 - Extensions match the final filename extension, with or without a leading dot.
 - Unknown metadata rejects an item when that metadata is required by a constraint.
 - `maxFiles` counts files that pass other constraints. Strings do not count.
-- Size checks use platform metadata; the package does not inspect file contents.
+- `maxFileSizeBytes` uses reported size metadata; unknown size is rejected when set. It does not cap bytes read.
+- For a hard content limit, use `openRead(maxBytes: ...)` or `readAsBytes(maxBytes: ...)` and handle `DropFileReadFailure.maxBytesExceeded`.
 - Nested targets receive the whole batch at the deepest target accepting any item. If none accepts an item, the deepest target receives the rejected batch.
 
 See [`example/`](example) for a runnable sample.
@@ -80,6 +81,30 @@ See [`example/`](example) for a runnable sample.
 ## Platform packages
 
 This package endorses `flutter_file_drop_android`, `flutter_file_drop_darwin`, `flutter_file_drop_windows`, `flutter_file_drop_linux`, and `flutter_file_drop_web`. Use the façade in application code. `flutter_file_drop_platform_interface` is for implementation authors.
+
+## Development before publication
+
+Until all seven packages are published, an app can use path overrides from a checkout:
+
+```yaml
+dependency_overrides:
+  flutter_file_drop:
+    path: ../flutter-file-drop/packages/flutter_file_drop
+  flutter_file_drop_platform_interface:
+    path: ../flutter-file-drop/packages/flutter_file_drop_platform_interface
+  flutter_file_drop_android:
+    path: ../flutter-file-drop/packages/flutter_file_drop_android
+  flutter_file_drop_darwin:
+    path: ../flutter-file-drop/packages/flutter_file_drop_darwin
+  flutter_file_drop_windows:
+    path: ../flutter-file-drop/packages/flutter_file_drop_windows
+  flutter_file_drop_linux:
+    path: ../flutter-file-drop/packages/flutter_file_drop_linux
+  flutter_file_drop_web:
+    path: ../flutter-file-drop/packages/flutter_file_drop_web
+```
+
+For Git development, point each override to this repository, the matching `packages/<package>` path, and the same commit or tag. Keep the interface and implementation packages on one revision. Remove the overrides and depend on the façade after publication.
 
 ## License
 

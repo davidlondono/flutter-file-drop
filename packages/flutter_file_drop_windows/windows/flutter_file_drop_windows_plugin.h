@@ -33,9 +33,15 @@ class FlutterFileDropWindowsPlugin : public flutter::Plugin,
   void ReadFileChunk(
       const std::string& session_id,
       const std::string& handle,
+      const std::string& read_id,
       int64_t offset,
       int64_t max_bytes,
       std::function<void(ErrorOr<std::optional<std::vector<uint8_t>>>)> result) override;
+  void ReleaseFileReadStream(
+      const std::string& session_id,
+      const std::string& handle,
+      const std::string& read_id,
+      std::function<void(std::optional<FlutterError>)> result) override;
   void ReleaseSession(
       const std::string& session_id,
       std::function<void(std::optional<FlutterError>)> result) override;

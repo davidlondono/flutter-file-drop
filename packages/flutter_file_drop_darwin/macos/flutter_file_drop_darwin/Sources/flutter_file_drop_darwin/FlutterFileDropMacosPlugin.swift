@@ -61,7 +61,7 @@ public class FlutterFileDropMacosPlugin: NSObject, FlutterPlugin, FlutterStreamH
     return true
   }
 
-  func readFileChunk(sessionId: String, fileHandle: String, offset: Int64, maxBytes: Int64) async throws -> FlutterStandardTypedData? {
+  func readFileChunk(sessionId: String, fileHandle: String, readId: String, offset: Int64, maxBytes: Int64) async throws -> FlutterStandardTypedData? {
     guard offset >= 0, maxBytes > 0, maxBytes <= 64 * 1024,
           let url = files[sessionId]?[fileHandle]?.0 else {
       return nil
@@ -74,6 +74,8 @@ public class FlutterFileDropMacosPlugin: NSObject, FlutterPlugin, FlutterStreamH
     }
     return FlutterStandardTypedData(bytes: data)
   }
+
+  func releaseFileReadStream(sessionId: String, fileHandle: String, readId: String) async throws {}
 
   func releaseSession(sessionId: String) async throws {
     for (_, file) in files.removeValue(forKey: sessionId) ?? [:] where file.1 {

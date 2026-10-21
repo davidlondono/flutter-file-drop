@@ -20,7 +20,8 @@ G_DECLARE_FINAL_TYPE(FlutterFileDropLinuxDropFileHostApiResponseHandle, flutter_
  * Table of functions exposed by DropFileHostApi to be implemented by the API provider.
  */
 typedef struct {
-  void (*read_file_chunk)(const gchar* session_id, const gchar* file_handle, int64_t offset, int64_t max_bytes, FlutterFileDropLinuxDropFileHostApiResponseHandle* response_handle, gpointer user_data);
+  void (*read_file_chunk)(const gchar* session_id, const gchar* file_handle, const gchar* read_id, int64_t offset, int64_t max_bytes, FlutterFileDropLinuxDropFileHostApiResponseHandle* response_handle, gpointer user_data);
+  void (*release_file_read_stream)(const gchar* session_id, const gchar* file_handle, const gchar* read_id, FlutterFileDropLinuxDropFileHostApiResponseHandle* response_handle, gpointer user_data);
   void (*release_session)(const gchar* session_id, FlutterFileDropLinuxDropFileHostApiResponseHandle* response_handle, gpointer user_data);
 } FlutterFileDropLinuxDropFileHostApiVTable;
 
@@ -67,6 +68,25 @@ void flutter_file_drop_linux_drop_file_host_api_respond_read_file_chunk(FlutterF
  * Responds with an error to DropFileHostApi.readFileChunk.
  */
 void flutter_file_drop_linux_drop_file_host_api_respond_error_read_file_chunk(FlutterFileDropLinuxDropFileHostApiResponseHandle* response_handle, const gchar* code, const gchar* message, FlValue* details);
+
+/**
+ * flutter_file_drop_linux_drop_file_host_api_respond_release_file_read_stream:
+ * @response_handle: a #FlutterFileDropLinuxDropFileHostApiResponseHandle.
+ *
+ * Responds to DropFileHostApi.releaseFileReadStream.
+ */
+void flutter_file_drop_linux_drop_file_host_api_respond_release_file_read_stream(FlutterFileDropLinuxDropFileHostApiResponseHandle* response_handle);
+
+/**
+ * flutter_file_drop_linux_drop_file_host_api_respond_error_release_file_read_stream:
+ * @response_handle: a #FlutterFileDropLinuxDropFileHostApiResponseHandle.
+ * @code: error code.
+ * @message: error message.
+ * @details: (allow-none): error details or %NULL.
+ *
+ * Responds with an error to DropFileHostApi.releaseFileReadStream.
+ */
+void flutter_file_drop_linux_drop_file_host_api_respond_error_release_file_read_stream(FlutterFileDropLinuxDropFileHostApiResponseHandle* response_handle, const gchar* code, const gchar* message, FlValue* details);
 
 /**
  * flutter_file_drop_linux_drop_file_host_api_respond_release_session:

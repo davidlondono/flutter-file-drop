@@ -369,19 +369,25 @@ void DropFileHostApi::SetUp(
             return;
           }
           const auto& file_handle_arg = std::get<std::string>(encodable_file_handle_arg);
-          const auto& encodable_offset_arg = args.at(2);
+          const auto& encodable_read_id_arg = args.at(2);
+          if (encodable_read_id_arg.IsNull()) {
+            reply(WrapError("read_id_arg unexpectedly null."));
+            return;
+          }
+          const auto& read_id_arg = std::get<std::string>(encodable_read_id_arg);
+          const auto& encodable_offset_arg = args.at(3);
           if (encodable_offset_arg.IsNull()) {
             reply(WrapError("offset_arg unexpectedly null."));
             return;
           }
           const int64_t offset_arg = encodable_offset_arg.LongValue();
-          const auto& encodable_max_bytes_arg = args.at(3);
+          const auto& encodable_max_bytes_arg = args.at(4);
           if (encodable_max_bytes_arg.IsNull()) {
             reply(WrapError("max_bytes_arg unexpectedly null."));
             return;
           }
           const int64_t max_bytes_arg = encodable_max_bytes_arg.LongValue();
-          api->ReadFileChunk(session_id_arg, file_handle_arg, offset_arg, max_bytes_arg, [reply](ErrorOr<std::optional<std::vector<uint8_t>>>&& output) {
+          api->ReadFileChunk(session_id_arg, file_handle_arg, read_id_arg, offset_arg, max_bytes_arg, [reply](ErrorOr<std::optional<std::vector<uint8_t>>>&& output) {
             if (output.has_error()) {
               reply(WrapError(output.error()));
               return;
@@ -393,6 +399,47 @@ void DropFileHostApi::SetUp(
             } else {
               wrapped.push_back(EncodableValue());
             }
+            reply(EncodableValue(std::move(wrapped)));
+          });
+        } catch (const std::exception& exception) {
+          reply(WrapError(exception.what()));
+        }
+      });
+    } else {
+      channel.SetMessageHandler(nullptr);
+    }
+  }
+  {
+    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.flutter_file_drop_platform_interface.DropFileHostApi.releaseFileReadStream" + prepended_suffix, &GetCodec());
+    if (api != nullptr) {
+      channel.SetMessageHandler([api](const EncodableValue& message, const ::flutter::MessageReply<EncodableValue>& reply) {
+        try {
+          const auto& args = std::get<EncodableList>(message);
+          const auto& encodable_session_id_arg = args.at(0);
+          if (encodable_session_id_arg.IsNull()) {
+            reply(WrapError("session_id_arg unexpectedly null."));
+            return;
+          }
+          const auto& session_id_arg = std::get<std::string>(encodable_session_id_arg);
+          const auto& encodable_file_handle_arg = args.at(1);
+          if (encodable_file_handle_arg.IsNull()) {
+            reply(WrapError("file_handle_arg unexpectedly null."));
+            return;
+          }
+          const auto& file_handle_arg = std::get<std::string>(encodable_file_handle_arg);
+          const auto& encodable_read_id_arg = args.at(2);
+          if (encodable_read_id_arg.IsNull()) {
+            reply(WrapError("read_id_arg unexpectedly null."));
+            return;
+          }
+          const auto& read_id_arg = std::get<std::string>(encodable_read_id_arg);
+          api->ReleaseFileReadStream(session_id_arg, file_handle_arg, read_id_arg, [reply](std::optional<FlutterError>&& output) {
+            if (output.has_value()) {
+              reply(WrapError(output.value()));
+              return;
+            }
+            EncodableList wrapped;
+            wrapped.push_back(EncodableValue());
             reply(EncodableValue(std::move(wrapped)));
           });
         } catch (const std::exception& exception) {

@@ -84,9 +84,15 @@ class DropFileHostApi {
   virtual void ReadFileChunk(
     const std::string& session_id,
     const std::string& file_handle,
+    const std::string& read_id,
     int64_t offset,
     int64_t max_bytes,
     std::function<void(ErrorOr<std::optional<std::vector<uint8_t>>> reply)> result) = 0;
+  virtual void ReleaseFileReadStream(
+    const std::string& session_id,
+    const std::string& file_handle,
+    const std::string& read_id,
+    std::function<void(std::optional<FlutterError> reply)> result) = 0;
   virtual void ReleaseSession(
     const std::string& session_id,
     std::function<void(std::optional<FlutterError> reply)> result) = 0;

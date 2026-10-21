@@ -36,8 +36,16 @@ abstract class DropFileHostApi {
   Uint8List? readFileChunk(
     String sessionId,
     String fileHandle,
+    String readId,
     int offset,
     int maxBytes,
+  );
+
+  @async
+  void releaseFileReadStream(
+    String sessionId,
+    String fileHandle,
+    String readId,
   );
 
   @async

@@ -65,7 +65,8 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
 
 /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
 interface DropFileHostApi {
-  suspend fun readFileChunk(sessionId: String, fileHandle: String, offset: Long, maxBytes: Long): ByteArray?
+  suspend fun readFileChunk(sessionId: String, fileHandle: String, readId: String, offset: Long, maxBytes: Long): ByteArray?
+  suspend fun releaseFileReadStream(sessionId: String, fileHandle: String, readId: String)
   suspend fun releaseSession(sessionId: String)
 
   companion object {
@@ -84,11 +85,34 @@ interface DropFileHostApi {
             val args = message as List<Any?>
             val sessionIdArg = args[0] as String
             val fileHandleArg = args[1] as String
-            val offsetArg = args[2] as Long
-            val maxBytesArg = args[3] as Long
+            val readIdArg = args[2] as String
+            val offsetArg = args[3] as Long
+            val maxBytesArg = args[4] as Long
             CoroutineScope(Dispatchers.Main).launch {
               val wrapped: List<Any?> = try {
-                listOf(api.readFileChunk(sessionIdArg, fileHandleArg, offsetArg, maxBytesArg))
+                listOf(api.readFileChunk(sessionIdArg, fileHandleArg, readIdArg, offsetArg, maxBytesArg))
+              } catch (exception: Throwable) {
+                MessagesPigeonUtils.wrapError(exception)
+              }
+              reply.reply(wrapped)
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.flutter_file_drop_platform_interface.DropFileHostApi.releaseFileReadStream$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val sessionIdArg = args[0] as String
+            val fileHandleArg = args[1] as String
+            val readIdArg = args[2] as String
+            CoroutineScope(Dispatchers.Main).launch {
+              val wrapped: List<Any?> = try {
+                api.releaseFileReadStream(sessionIdArg, fileHandleArg, readIdArg)
+                listOf(null)
               } catch (exception: Throwable) {
                 MessagesPigeonUtils.wrapError(exception)
               }

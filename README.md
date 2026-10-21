@@ -20,7 +20,7 @@ The façade owns the app API and routes whole batches to nested targets. Native 
 
 Incoming drops only. Supported payloads are files and raw `text/plain`, `text/html`, and `text/uri-list` values. The package does not fetch URI values, traverse directories, sniff file contents, or promise local file paths. File reads stream in bounded chunks and remain valid until the awaited `onDrop` callback completes.
 
-Requirements: Flutter 3.44+, Dart 3.12+, Android API 24+, iOS 15+, macOS 12+.
+Requirements: Flutter 3.44+, Dart 3.12+, Android API 24+, iOS 13+, macOS 12+.
 
 ## Development
 

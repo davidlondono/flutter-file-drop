@@ -398,9 +398,11 @@ void FlutterFileDropWindowsPlugin::RegisterNativeDropTarget(HWND window) {
 }
 
 void FlutterFileDropWindowsPlugin::ReadFileChunk(
-    const std::string& session_id, const std::string& file_handle, int64_t offset,
+    const std::string& session_id, const std::string& file_handle,
+    const std::string& read_id, int64_t offset,
     int64_t max_bytes,
     std::function<void(ErrorOr<std::optional<std::vector<uint8_t>>>)> result) {
+  (void)read_id;
   const auto session = files_.find(session_id);
   if (offset < 0 || max_bytes <= 0 || max_bytes > 64 * 1024 || session == files_.end()) {
     result(std::optional<std::vector<uint8_t>>{});
@@ -425,6 +427,16 @@ void FlutterFileDropWindowsPlugin::ReadFileChunk(
     return;
   }
   result(std::optional<std::vector<uint8_t>>(std::move(bytes)));
+}
+
+void FlutterFileDropWindowsPlugin::ReleaseFileReadStream(
+    const std::string& session_id, const std::string& handle,
+    const std::string& read_id,
+    std::function<void(std::optional<FlutterError>)> result) {
+  (void)session_id;
+  (void)handle;
+  (void)read_id;
+  result(std::optional<FlutterError>{});
 }
 
 void FlutterFileDropWindowsPlugin::ReleaseSession(

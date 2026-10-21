@@ -392,6 +392,45 @@ static FlutterFileDropLinuxDropFileHostApiReadFileChunkResponse* flutter_file_dr
   return self;
 }
 
+G_DECLARE_FINAL_TYPE(FlutterFileDropLinuxDropFileHostApiReleaseFileReadStreamResponse, flutter_file_drop_linux_drop_file_host_api_release_file_read_stream_response, FLUTTER_FILE_DROP_LINUX, DROP_FILE_HOST_API_RELEASE_FILE_READ_STREAM_RESPONSE, GObject)
+
+struct _FlutterFileDropLinuxDropFileHostApiReleaseFileReadStreamResponse {
+  GObject parent_instance;
+
+  FlValue* value;
+};
+
+G_DEFINE_TYPE(FlutterFileDropLinuxDropFileHostApiReleaseFileReadStreamResponse, flutter_file_drop_linux_drop_file_host_api_release_file_read_stream_response, G_TYPE_OBJECT)
+
+static void flutter_file_drop_linux_drop_file_host_api_release_file_read_stream_response_dispose(GObject* object) {
+  FlutterFileDropLinuxDropFileHostApiReleaseFileReadStreamResponse* self = FLUTTER_FILE_DROP_LINUX_DROP_FILE_HOST_API_RELEASE_FILE_READ_STREAM_RESPONSE(object);
+  g_clear_pointer(&self->value, fl_value_unref);
+  G_OBJECT_CLASS(flutter_file_drop_linux_drop_file_host_api_release_file_read_stream_response_parent_class)->dispose(object);
+}
+
+static void flutter_file_drop_linux_drop_file_host_api_release_file_read_stream_response_init(FlutterFileDropLinuxDropFileHostApiReleaseFileReadStreamResponse* self) {
+}
+
+static void flutter_file_drop_linux_drop_file_host_api_release_file_read_stream_response_class_init(FlutterFileDropLinuxDropFileHostApiReleaseFileReadStreamResponseClass* klass) {
+  G_OBJECT_CLASS(klass)->dispose = flutter_file_drop_linux_drop_file_host_api_release_file_read_stream_response_dispose;
+}
+
+static FlutterFileDropLinuxDropFileHostApiReleaseFileReadStreamResponse* flutter_file_drop_linux_drop_file_host_api_release_file_read_stream_response_new() {
+  FlutterFileDropLinuxDropFileHostApiReleaseFileReadStreamResponse* self = FLUTTER_FILE_DROP_LINUX_DROP_FILE_HOST_API_RELEASE_FILE_READ_STREAM_RESPONSE(g_object_new(flutter_file_drop_linux_drop_file_host_api_release_file_read_stream_response_get_type(), nullptr));
+  self->value = fl_value_new_list();
+  fl_value_append_take(self->value, fl_value_new_null());
+  return self;
+}
+
+static FlutterFileDropLinuxDropFileHostApiReleaseFileReadStreamResponse* flutter_file_drop_linux_drop_file_host_api_release_file_read_stream_response_new_error(const gchar* code, const gchar* message, FlValue* details) {
+  FlutterFileDropLinuxDropFileHostApiReleaseFileReadStreamResponse* self = FLUTTER_FILE_DROP_LINUX_DROP_FILE_HOST_API_RELEASE_FILE_READ_STREAM_RESPONSE(g_object_new(flutter_file_drop_linux_drop_file_host_api_release_file_read_stream_response_get_type(), nullptr));
+  self->value = fl_value_new_list();
+  fl_value_append_take(self->value, fl_value_new_string(code));
+  fl_value_append_take(self->value, fl_value_new_string(message != nullptr ? message : ""));
+  fl_value_append_take(self->value, details != nullptr ? fl_value_ref(details) : fl_value_new_null());
+  return self;
+}
+
 G_DECLARE_FINAL_TYPE(FlutterFileDropLinuxDropFileHostApiReleaseSessionResponse, flutter_file_drop_linux_drop_file_host_api_release_session_response, FLUTTER_FILE_DROP_LINUX, DROP_FILE_HOST_API_RELEASE_SESSION_RESPONSE, GObject)
 
 struct _FlutterFileDropLinuxDropFileHostApiReleaseSessionResponse {
@@ -477,11 +516,30 @@ static void flutter_file_drop_linux_drop_file_host_api_read_file_chunk_cb(FlBasi
   FlValue* value1 = fl_value_get_list_value(message_, 1);
   const gchar* file_handle = fl_value_get_string(value1);
   FlValue* value2 = fl_value_get_list_value(message_, 2);
-  int64_t offset = fl_value_get_int(value2);
+  const gchar* read_id = fl_value_get_string(value2);
   FlValue* value3 = fl_value_get_list_value(message_, 3);
-  int64_t max_bytes = fl_value_get_int(value3);
+  int64_t offset = fl_value_get_int(value3);
+  FlValue* value4 = fl_value_get_list_value(message_, 4);
+  int64_t max_bytes = fl_value_get_int(value4);
   g_autoptr(FlutterFileDropLinuxDropFileHostApiResponseHandle) handle = flutter_file_drop_linux_drop_file_host_api_response_handle_new(channel, response_handle);
-  self->vtable->read_file_chunk(session_id, file_handle, offset, max_bytes, handle, self->user_data);
+  self->vtable->read_file_chunk(session_id, file_handle, read_id, offset, max_bytes, handle, self->user_data);
+}
+
+static void flutter_file_drop_linux_drop_file_host_api_release_file_read_stream_cb(FlBasicMessageChannel* channel, FlValue* message_, FlBasicMessageChannelResponseHandle* response_handle, gpointer user_data) {
+  FlutterFileDropLinuxDropFileHostApi* self = FLUTTER_FILE_DROP_LINUX_DROP_FILE_HOST_API(user_data);
+
+  if (self->vtable == nullptr || self->vtable->release_file_read_stream == nullptr) {
+    return;
+  }
+
+  FlValue* value0 = fl_value_get_list_value(message_, 0);
+  const gchar* session_id = fl_value_get_string(value0);
+  FlValue* value1 = fl_value_get_list_value(message_, 1);
+  const gchar* file_handle = fl_value_get_string(value1);
+  FlValue* value2 = fl_value_get_list_value(message_, 2);
+  const gchar* read_id = fl_value_get_string(value2);
+  g_autoptr(FlutterFileDropLinuxDropFileHostApiResponseHandle) handle = flutter_file_drop_linux_drop_file_host_api_response_handle_new(channel, response_handle);
+  self->vtable->release_file_read_stream(session_id, file_handle, read_id, handle, self->user_data);
 }
 
 static void flutter_file_drop_linux_drop_file_host_api_release_session_cb(FlBasicMessageChannel* channel, FlValue* message_, FlBasicMessageChannelResponseHandle* response_handle, gpointer user_data) {
@@ -505,6 +563,9 @@ void flutter_file_drop_linux_drop_file_host_api_set_method_handlers(FlBinaryMess
   g_autofree gchar* read_file_chunk_channel_name = g_strdup_printf("dev.flutter.pigeon.flutter_file_drop_platform_interface.DropFileHostApi.readFileChunk%s", dot_suffix);
   g_autoptr(FlBasicMessageChannel) read_file_chunk_channel = fl_basic_message_channel_new(messenger, read_file_chunk_channel_name, FL_MESSAGE_CODEC(codec));
   fl_basic_message_channel_set_message_handler(read_file_chunk_channel, flutter_file_drop_linux_drop_file_host_api_read_file_chunk_cb, g_object_ref(api_data), g_object_unref);
+  g_autofree gchar* release_file_read_stream_channel_name = g_strdup_printf("dev.flutter.pigeon.flutter_file_drop_platform_interface.DropFileHostApi.releaseFileReadStream%s", dot_suffix);
+  g_autoptr(FlBasicMessageChannel) release_file_read_stream_channel = fl_basic_message_channel_new(messenger, release_file_read_stream_channel_name, FL_MESSAGE_CODEC(codec));
+  fl_basic_message_channel_set_message_handler(release_file_read_stream_channel, flutter_file_drop_linux_drop_file_host_api_release_file_read_stream_cb, g_object_ref(api_data), g_object_unref);
   g_autofree gchar* release_session_channel_name = g_strdup_printf("dev.flutter.pigeon.flutter_file_drop_platform_interface.DropFileHostApi.releaseSession%s", dot_suffix);
   g_autoptr(FlBasicMessageChannel) release_session_channel = fl_basic_message_channel_new(messenger, release_session_channel_name, FL_MESSAGE_CODEC(codec));
   fl_basic_message_channel_set_message_handler(release_session_channel, flutter_file_drop_linux_drop_file_host_api_release_session_cb, g_object_ref(api_data), g_object_unref);
@@ -517,6 +578,9 @@ void flutter_file_drop_linux_drop_file_host_api_clear_method_handlers(FlBinaryMe
   g_autofree gchar* read_file_chunk_channel_name = g_strdup_printf("dev.flutter.pigeon.flutter_file_drop_platform_interface.DropFileHostApi.readFileChunk%s", dot_suffix);
   g_autoptr(FlBasicMessageChannel) read_file_chunk_channel = fl_basic_message_channel_new(messenger, read_file_chunk_channel_name, FL_MESSAGE_CODEC(codec));
   fl_basic_message_channel_set_message_handler(read_file_chunk_channel, nullptr, nullptr, nullptr);
+  g_autofree gchar* release_file_read_stream_channel_name = g_strdup_printf("dev.flutter.pigeon.flutter_file_drop_platform_interface.DropFileHostApi.releaseFileReadStream%s", dot_suffix);
+  g_autoptr(FlBasicMessageChannel) release_file_read_stream_channel = fl_basic_message_channel_new(messenger, release_file_read_stream_channel_name, FL_MESSAGE_CODEC(codec));
+  fl_basic_message_channel_set_message_handler(release_file_read_stream_channel, nullptr, nullptr, nullptr);
   g_autofree gchar* release_session_channel_name = g_strdup_printf("dev.flutter.pigeon.flutter_file_drop_platform_interface.DropFileHostApi.releaseSession%s", dot_suffix);
   g_autoptr(FlBasicMessageChannel) release_session_channel = fl_basic_message_channel_new(messenger, release_session_channel_name, FL_MESSAGE_CODEC(codec));
   fl_basic_message_channel_set_message_handler(release_session_channel, nullptr, nullptr, nullptr);
@@ -535,6 +599,22 @@ void flutter_file_drop_linux_drop_file_host_api_respond_error_read_file_chunk(Fl
   g_autoptr(GError) error = nullptr;
   if (!fl_basic_message_channel_respond(response_handle->channel, response_handle->response_handle, response->value, &error)) {
     g_warning("Failed to send response to %s.%s: %s", "DropFileHostApi", "readFileChunk", error->message);
+  }
+}
+
+void flutter_file_drop_linux_drop_file_host_api_respond_release_file_read_stream(FlutterFileDropLinuxDropFileHostApiResponseHandle* response_handle) {
+  g_autoptr(FlutterFileDropLinuxDropFileHostApiReleaseFileReadStreamResponse) response = flutter_file_drop_linux_drop_file_host_api_release_file_read_stream_response_new();
+  g_autoptr(GError) error = nullptr;
+  if (!fl_basic_message_channel_respond(response_handle->channel, response_handle->response_handle, response->value, &error)) {
+    g_warning("Failed to send response to %s.%s: %s", "DropFileHostApi", "releaseFileReadStream", error->message);
+  }
+}
+
+void flutter_file_drop_linux_drop_file_host_api_respond_error_release_file_read_stream(FlutterFileDropLinuxDropFileHostApiResponseHandle* response_handle, const gchar* code, const gchar* message, FlValue* details) {
+  g_autoptr(FlutterFileDropLinuxDropFileHostApiReleaseFileReadStreamResponse) response = flutter_file_drop_linux_drop_file_host_api_release_file_read_stream_response_new_error(code, message, details);
+  g_autoptr(GError) error = nullptr;
+  if (!fl_basic_message_channel_respond(response_handle->channel, response_handle->response_handle, response->value, &error)) {
+    g_warning("Failed to send response to %s.%s: %s", "DropFileHostApi", "releaseFileReadStream", error->message);
   }
 }
 

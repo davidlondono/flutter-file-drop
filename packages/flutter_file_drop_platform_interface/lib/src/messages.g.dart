@@ -75,6 +75,7 @@ class DropFileHostApi {
   Future<Uint8List?> readFileChunk(
     String sessionId,
     String fileHandle,
+    String readId,
     int offset,
     int maxBytes,
   ) async {
@@ -86,7 +87,7 @@ class DropFileHostApi {
       binaryMessenger: pigeonVar_binaryMessenger,
     );
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(
-      <Object?>[sessionId, fileHandle, offset, maxBytes],
+      <Object?>[sessionId, fileHandle, readId, offset, maxBytes],
     );
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
@@ -96,6 +97,30 @@ class DropFileHostApi {
       isNullValid: true,
     );
     return pigeonVar_replyValue as Uint8List?;
+  }
+
+  Future<void> releaseFileReadStream(
+    String sessionId,
+    String fileHandle,
+    String readId,
+  ) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.flutter_file_drop_platform_interface.DropFileHostApi.releaseFileReadStream$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(
+      <Object?>[sessionId, fileHandle, readId],
+    );
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: true,
+    );
   }
 
   Future<void> releaseSession(String sessionId) async {

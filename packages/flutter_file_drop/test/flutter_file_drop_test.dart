@@ -230,6 +230,47 @@ void main() {
     ]);
   });
 
+  testWidgets('size constraints screen reported size and reject unknown size', (
+    tester,
+  ) async {
+    DropResult? result;
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: DropTarget(
+          constraints: DropConstraints(maxFileSizeBytes: 2),
+          onDrop: (value) async => result = value,
+          child: const SizedBox(
+            width: 100,
+            height: 100,
+            key: ValueKey('target'),
+          ),
+        ),
+      ),
+    );
+    final position = tester.getCenter(find.byKey(const ValueKey('target')));
+    platform.emit(
+      _dropEvent(position, const <PlatformDropItem>[
+        PlatformDropItem(
+          type: PlatformDropItemType.file,
+          handle: 'large',
+          size: 3,
+        ),
+        PlatformDropItem(type: PlatformDropItemType.file, handle: 'unknown'),
+      ]),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      result!.items.map((item) => item.reasons.single),
+      <DropRejectionReason>[
+        DropRejectionReason.fileTooLarge,
+        DropRejectionReason.fileSizeUnknown,
+      ],
+    );
+  });
+
   testWidgets('streams bytes during callback and expires file after callback', (
     tester,
   ) async {
@@ -241,7 +282,7 @@ void main() {
         child: DropTarget(
           onDrop: (result) async {
             file = result.accepted.single.item as DropFile;
-            bytes = await file!.readAsBytes();
+            bytes = await file!.readAsBytes(maxBytes: 3);
           },
           child: const SizedBox(
             width: 100,
@@ -269,6 +310,7 @@ void main() {
     await tester.pump();
 
     expect(bytes, <int>[1, 2, 3]);
+    expect(platform.releasedReads, hasLength(1));
     await expectLater(
       file!.readAsBytes(),
       throwsA(
@@ -279,6 +321,159 @@ void main() {
         ),
       ),
     );
+  });
+
+  testWidgets('bounded reads reject bytes beyond the actual byte limit', (
+    tester,
+  ) async {
+    DropFileReadException? failure;
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: DropTarget(
+          onDrop: (result) async {
+            final file = result.accepted.single.item as DropFile;
+            try {
+              await file.readAsBytes(maxBytes: 2);
+            } on DropFileReadException catch (error) {
+              failure = error;
+            }
+          },
+          child: const SizedBox(
+            width: 100,
+            height: 100,
+            key: ValueKey('target'),
+          ),
+        ),
+      ),
+    );
+    final position = tester.getCenter(find.byKey(const ValueKey('target')));
+    platform.emit(
+      _dropEvent(position, const <PlatformDropItem>[
+        PlatformDropItem(type: PlatformDropItemType.file, handle: 'file'),
+      ]),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(failure?.reason, DropFileReadFailure.maxBytesExceeded);
+    expect(platform.requestedByteCounts, <int>[3]);
+    expect(platform.releasedReads, hasLength(1));
+  });
+
+  testWidgets('bounded reads catch a source that underreports its size', (
+    tester,
+  ) async {
+    platform.fileBytes = Uint8List(64 * 1024 + 17);
+    DropFileReadException? failure;
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: DropTarget(
+          onDrop: (result) async {
+            final file = result.accepted.single.item as DropFile;
+            try {
+              await file.readAsBytes(maxBytes: 100);
+            } on DropFileReadException catch (error) {
+              failure = error;
+            }
+          },
+          child: const SizedBox(
+            width: 100,
+            height: 100,
+            key: ValueKey('target'),
+          ),
+        ),
+      ),
+    );
+    final position = tester.getCenter(find.byKey(const ValueKey('target')));
+    platform.emit(
+      _dropEvent(position, const <PlatformDropItem>[
+        PlatformDropItem(
+          type: PlatformDropItemType.file,
+          handle: 'file',
+          size: 1,
+        ),
+      ]),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(failure?.reason, DropFileReadFailure.maxBytesExceeded);
+    expect(platform.requestedByteCounts.first, 101);
+    expect(platform.releasedReads, hasLength(1));
+  });
+
+  testWidgets('reads large files in ordered chunks no larger than 64 KiB', (
+    tester,
+  ) async {
+    final expected = Uint8List.fromList(
+      List<int>.generate(64 * 1024 + 17, (index) => index % 256),
+    );
+    platform.fileBytes = expected;
+    final chunks = <Uint8List>[];
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: DropTarget(
+          onDrop: (result) async {
+            await for (final chunk
+                in (result.accepted.single.item as DropFile).openRead()) {
+              chunks.add(chunk);
+            }
+          },
+          child: const SizedBox(
+            width: 100,
+            height: 100,
+            key: ValueKey('target'),
+          ),
+        ),
+      ),
+    );
+    final position = tester.getCenter(find.byKey(const ValueKey('target')));
+    platform.emit(
+      _dropEvent(position, const <PlatformDropItem>[
+        PlatformDropItem(type: PlatformDropItemType.file, handle: 'file'),
+      ]),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(chunks.map((chunk) => chunk.length), <int>[64 * 1024, 17]);
+    expect(chunks.expand((chunk) => chunk), expected);
+    expect(platform.releasedReads, hasLength(1));
+  });
+
+  testWidgets('cancelling a reader closes its platform stream', (tester) async {
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: DropTarget(
+          onDrop: (result) async {
+            final file = result.accepted.single.item as DropFile;
+            final iterator = StreamIterator<Uint8List>(file.openRead());
+            expect(await iterator.moveNext(), isTrue);
+            await iterator.cancel();
+          },
+          child: const SizedBox(
+            width: 100,
+            height: 100,
+            key: ValueKey('target'),
+          ),
+        ),
+      ),
+    );
+    final position = tester.getCenter(find.byKey(const ValueKey('target')));
+    platform.emit(
+      _dropEvent(position, const <PlatformDropItem>[
+        PlatformDropItem(type: PlatformDropItemType.file, handle: 'file'),
+      ]),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(platform.releasedReads, hasLength(1));
+    expect(platform.releasedSessions, <String>['session-1']);
   });
 }
 
@@ -296,6 +491,9 @@ class _FakeDropPlatform extends FlutterFileDropPlatform
   final StreamController<PlatformDropEvent> controller =
       StreamController<PlatformDropEvent>.broadcast(sync: true);
   final List<String> releasedSessions = <String>[];
+  final List<String> releasedReads = <String>[];
+  final List<int> requestedByteCounts = <int>[];
+  Uint8List fileBytes = Uint8List.fromList(<int>[1, 2, 3]);
 
   void emit(PlatformDropEvent event) => controller.add(event);
 
@@ -306,13 +504,23 @@ class _FakeDropPlatform extends FlutterFileDropPlatform
   Future<Uint8List?> readFileChunk(
     String sessionId,
     String handle,
+    String readId,
     int offset,
     int maxBytes,
   ) async {
-    const bytes = <int>[1, 2, 3];
-    if (offset >= bytes.length) return null;
-    final end = (offset + maxBytes).clamp(0, bytes.length);
-    return Uint8List.fromList(bytes.sublist(offset, end));
+    requestedByteCounts.add(maxBytes);
+    if (offset >= fileBytes.length) return null;
+    final end = (offset + maxBytes).clamp(0, fileBytes.length);
+    return Uint8List.sublistView(fileBytes, offset, end);
+  }
+
+  @override
+  Future<void> releaseFileReadStream(
+    String sessionId,
+    String handle,
+    String readId,
+  ) async {
+    releasedReads.add(readId);
   }
 
   @override

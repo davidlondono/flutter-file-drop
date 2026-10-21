@@ -21,7 +21,12 @@ enum DropRejectionReason {
 }
 
 /// Failure category raised while reading a [DropFile].
-enum DropFileReadFailure { callbackComplete, unavailable, platform }
+enum DropFileReadFailure {
+  callbackComplete,
+  unavailable,
+  platform,
+  maxBytesExceeded,
+}
 
 /// Error raised when a dropped file cannot be read.
 class DropFileReadException implements Exception {
@@ -60,10 +65,17 @@ class DropFile extends DropItem {
     required Future<Uint8List?> Function(
       String sessionId,
       String handle,
+      String readId,
       int offset,
       int maxBytes,
     )
     readChunk,
+    required Future<void> Function(
+      String sessionId,
+      String handle,
+      String readId,
+    )
+    releaseRead,
   }) => DropFile._(
     name: name,
     mimeType: mimeType,
@@ -73,6 +85,7 @@ class DropFile extends DropItem {
     sessionId: sessionId,
     handle: handle,
     readChunk: readChunk,
+    releaseRead: releaseRead,
   );
 
   DropFile._({
@@ -84,6 +97,7 @@ class DropFile extends DropItem {
     required this._sessionId,
     required this._handle,
     required this._readChunk,
+    required this._releaseRead,
   });
 
   /// Display name supplied by the source, when available.
@@ -105,53 +119,96 @@ class DropFile extends DropItem {
   final Future<Uint8List?> Function(
     String sessionId,
     String handle,
+    String readId,
     int offset,
     int maxBytes,
   )
   _readChunk;
+  final Future<void> Function(String sessionId, String handle, String readId)
+  _releaseRead;
+  static int _nextReadId = 0;
   bool _isValid = true;
 
   @override
   DropItemKind get kind => DropItemKind.file;
 
-  /// Reads file data in bounded 64 KiB chunks.
+  /// Reads file data in bounded 64 KiB chunks, optionally limiting total bytes.
   ///
+  /// When [maxBytes] is set, throws [DropFileReadException] with
+  /// [DropFileReadFailure.maxBytesExceeded] if the source contains more bytes.
+  /// At most one byte beyond the limit is read to detect overflow. This checks
+  /// bytes actually delivered by the platform, unlike [size] metadata.
   /// Consume this stream before the awaited `onDrop` callback completes.
-  Stream<Uint8List> openRead() async* {
+  Stream<Uint8List> openRead({int? maxBytes}) async* {
+    if (maxBytes != null && maxBytes < 0) {
+      throw ArgumentError.value(
+        maxBytes,
+        'maxBytes',
+        'Must be zero or greater.',
+      );
+    }
     if (!_isValid) {
       throw const DropFileReadException(DropFileReadFailure.callbackComplete);
     }
+    final readId = 'read-${_nextReadId++}';
     var offset = 0;
-    while (true) {
-      if (!_isValid) {
-        throw const DropFileReadException(DropFileReadFailure.callbackComplete);
+    try {
+      while (true) {
+        if (!_isValid) {
+          throw const DropFileReadException(
+            DropFileReadFailure.callbackComplete,
+          );
+        }
+        final remaining = maxBytes == null ? null : maxBytes - offset;
+        final requestBytes = remaining == null || remaining >= 64 * 1024
+            ? 64 * 1024
+            : remaining + 1;
+        late final Uint8List? bytes;
+        try {
+          bytes = await _readChunk(
+            _sessionId,
+            _handle,
+            readId,
+            offset,
+            requestBytes,
+          );
+        } on PlatformException catch (error) {
+          throw DropFileReadException(DropFileReadFailure.platform, error);
+        } catch (error) {
+          throw DropFileReadException(DropFileReadFailure.unavailable, error);
+        }
+        if (!_isValid) {
+          throw const DropFileReadException(
+            DropFileReadFailure.callbackComplete,
+          );
+        }
+        if (bytes == null || bytes.isEmpty) return;
+        if (bytes.length > requestBytes || bytes.length > 64 * 1024) {
+          throw const DropFileReadException(DropFileReadFailure.unavailable);
+        }
+        if (remaining != null && bytes.length > remaining) {
+          throw const DropFileReadException(
+            DropFileReadFailure.maxBytesExceeded,
+          );
+        }
+        offset += bytes.length;
+        yield bytes;
       }
-      late final Uint8List? bytes;
+    } finally {
       try {
-        bytes = await _readChunk(_sessionId, _handle, offset, 64 * 1024);
-      } on PlatformException catch (error) {
-        throw DropFileReadException(DropFileReadFailure.platform, error);
-      } catch (error) {
-        throw DropFileReadException(DropFileReadFailure.unavailable, error);
+        await _releaseRead(_sessionId, _handle, readId);
+      } catch (_) {
+        // Session release still runs when the onDrop callback completes.
       }
-      if (!_isValid) {
-        throw const DropFileReadException(DropFileReadFailure.callbackComplete);
-      }
-      if (bytes == null || bytes.isEmpty) return;
-      if (bytes.length > 64 * 1024) {
-        throw const DropFileReadException(DropFileReadFailure.unavailable);
-      }
-      offset += bytes.length;
-      yield bytes;
     }
   }
 
-  /// Reads the complete file into memory.
+  /// Reads the complete file into memory, subject to optional [maxBytes].
   ///
   /// Use [openRead] when files may be large.
-  Future<Uint8List> readAsBytes() async {
+  Future<Uint8List> readAsBytes({int? maxBytes}) async {
     final builder = BytesBuilder(copy: false);
-    await for (final chunk in openRead()) {
+    await for (final chunk in openRead(maxBytes: maxBytes)) {
       builder.add(chunk);
     }
     return builder.takeBytes();
@@ -269,7 +326,8 @@ class DropConstraints {
   /// Maximum number of otherwise eligible files. Strings do not count.
   final int? maxFiles;
 
-  /// Maximum file size in bytes. Unknown sizes are rejected when set.
+  /// Maximum reported file size in bytes. Unknown sizes are rejected when set.
+  /// This metadata check does not limit bytes read from the file.
   final int? maxFileSizeBytes;
 
   static int? _validateLimit(String name, int? value) {

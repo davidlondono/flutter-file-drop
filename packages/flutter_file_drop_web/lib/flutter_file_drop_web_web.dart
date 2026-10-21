@@ -174,6 +174,7 @@ class _WebDropPlatform extends FlutterFileDropPlatform {
   Future<Uint8List?> readFileChunk(
     String sessionId,
     String handle,
+    String readId,
     int offset,
     int maxBytes,
   ) async {
@@ -185,6 +186,13 @@ class _WebDropPlatform extends FlutterFileDropPlatform {
             .toDart;
     return Uint8List.view(buffer);
   }
+
+  @override
+  Future<void> releaseFileReadStream(
+    String sessionId,
+    String handle,
+    String readId,
+  ) async {}
 
   @override
   Future<void> releaseSession(String sessionId) async {

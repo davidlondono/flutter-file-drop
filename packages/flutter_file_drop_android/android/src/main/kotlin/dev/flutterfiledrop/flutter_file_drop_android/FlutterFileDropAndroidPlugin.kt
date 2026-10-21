@@ -33,6 +33,7 @@ class FlutterFileDropAndroidPlugin :
     private var flutterView: FlutterView? = null
     private var currentSessionId: String? = null
     private val files = mutableMapOf<String, MutableMap<String, Uri>>()
+    private val readStreams = mutableMapOf<String, MutableMap<String, MutableMap<String, SequentialFileRead>>>()
     private val dragPermissions = mutableMapOf<String, DragAndDropPermissions>()
 
     private val dragListener = View.OnDragListener { view, event -> handleDrag(view, event) }
@@ -242,41 +243,83 @@ class FlutterFileDropAndroidPlugin :
         )
     }
 
-    override suspend fun readFileChunk(sessionId: String, fileHandle: String, offset: Long, maxBytes: Long): ByteArray? {
+    override suspend fun readFileChunk(
+        sessionId: String,
+        fileHandle: String,
+        readId: String,
+        offset: Long,
+        maxBytes: Long,
+    ): ByteArray? {
         if (offset < 0 || maxBytes <= 0 || maxBytes > 64 * 1024) return null
         val uri = files[sessionId]?.get(fileHandle) ?: return null
-        val input = applicationContext.contentResolver.openInputStream(uri) ?: return null
-        input.use { stream ->
-            skipExactly(stream, offset)
-            val buffer = ByteArray(maxBytes.toInt())
-            val count = stream.read(buffer)
-            if (count <= 0) return null
-            return if (count == buffer.size) buffer else buffer.copyOf(count)
+        val sessionReads = readStreams.getOrPut(sessionId) { mutableMapOf() }
+        val fileReads = sessionReads.getOrPut(fileHandle) { mutableMapOf() }
+        val read = fileReads[readId] ?: run {
+            if (offset != 0L) return null
+            val stream = applicationContext.contentResolver.openInputStream(uri) ?: return null
+            SequentialFileRead(stream).also { fileReads[readId] = it }
         }
+        if (offset != read.offset) {
+            releaseFileReadStream(sessionId, fileHandle, readId)
+            return null
+        }
+        try {
+            val bytes = read.read(offset, maxBytes.toInt())
+            if (bytes == null) {
+                releaseFileReadStream(sessionId, fileHandle, readId)
+                return null
+            }
+            return bytes
+        } catch (error: Exception) {
+            releaseFileReadStream(sessionId, fileHandle, readId)
+            throw error
+        }
+    }
+
+    override suspend fun releaseFileReadStream(sessionId: String, fileHandle: String, readId: String) {
+        readStreams[sessionId]?.get(fileHandle)?.remove(readId)?.let {
+            runCatching { it.close() }
+        }
+        if (readStreams[sessionId]?.get(fileHandle).isNullOrEmpty()) {
+            readStreams[sessionId]?.remove(fileHandle)
+        }
+        if (readStreams[sessionId].isNullOrEmpty()) readStreams.remove(sessionId)
     }
 
     override suspend fun releaseSession(sessionId: String) {
         files.remove(sessionId)
+        readStreams.remove(sessionId)?.values?.forEach { streams ->
+            streams.values.forEach { runCatching { it.close() } }
+        }
         dragPermissions.remove(sessionId)?.release()
     }
 
     private fun releaseAllSessions() {
         files.clear()
+        readStreams.values.forEach { sessionReads ->
+            sessionReads.values.forEach { streams ->
+                streams.values.forEach { runCatching { it.close() } }
+            }
+        }
+        readStreams.clear()
         dragPermissions.values.forEach(DragAndDropPermissions::release)
         dragPermissions.clear()
     }
 
-    private fun skipExactly(input: InputStream, count: Long) {
-        var remaining = count
-        while (remaining > 0) {
-            val skipped = input.skip(remaining)
-            if (skipped > 0) {
-                remaining -= skipped
-            } else if (input.read() == -1) {
-                return
-            } else {
-                remaining--
-            }
-        }
+}
+
+internal class SequentialFileRead(private val stream: InputStream) : AutoCloseable {
+    var offset: Long = 0
+        private set
+
+    fun read(requestedOffset: Long, maxBytes: Int): ByteArray? {
+        if (requestedOffset != offset || maxBytes <= 0) return null
+        val buffer = ByteArray(maxBytes)
+        val count = stream.read(buffer)
+        if (count <= 0) return null
+        offset += count
+        return if (count == buffer.size) buffer else buffer.copyOf(count)
     }
+
+    override fun close() = stream.close()
 }

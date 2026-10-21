@@ -39,9 +39,17 @@ class _FakeDropPlatform extends FlutterFileDropPlatform
   Future<Uint8List?> readFileChunk(
     String sessionId,
     String handle,
+    String readId,
     int offset,
     int maxBytes,
   ) async => null;
+
+  @override
+  Future<void> releaseFileReadStream(
+    String sessionId,
+    String handle,
+    String readId,
+  ) async {}
 
   @override
   Future<void> releaseSession(String sessionId) async {}

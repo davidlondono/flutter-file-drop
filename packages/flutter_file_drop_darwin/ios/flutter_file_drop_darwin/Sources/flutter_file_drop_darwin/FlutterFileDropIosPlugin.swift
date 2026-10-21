@@ -74,7 +74,7 @@ public class FlutterFileDropIosPlugin: NSObject, FlutterPlugin, FlutterStreamHan
     }
   }
 
-  func readFileChunk(sessionId: String, fileHandle: String, offset: Int64, maxBytes: Int64) async throws -> FlutterStandardTypedData? {
+  func readFileChunk(sessionId: String, fileHandle: String, readId: String, offset: Int64, maxBytes: Int64) async throws -> FlutterStandardTypedData? {
     guard offset >= 0, maxBytes > 0, maxBytes <= 64 * 1024,
           let url = files[sessionId]?[fileHandle] else {
       return nil
@@ -88,6 +88,8 @@ public class FlutterFileDropIosPlugin: NSObject, FlutterPlugin, FlutterStreamHan
     }
     return FlutterStandardTypedData(bytes: data)
   }
+
+  func releaseFileReadStream(sessionId: String, fileHandle: String, readId: String) async throws {}
 
   func releaseSession(sessionId: String) async throws {
     files.removeValue(forKey: sessionId)
@@ -214,19 +216,28 @@ public class FlutterFileDropIosPlugin: NSObject, FlutterPlugin, FlutterStreamHan
 
   private func loadFile(_ provider: NSItemProvider, typeIdentifier: String, to directory: URL, name: String) async -> URL? {
     await withCheckedContinuation { continuation in
-      provider.loadFileRepresentation(forTypeIdentifier: typeIdentifier) { source, _ in
+      provider.loadInPlaceFileRepresentation(forTypeIdentifier: typeIdentifier) { source, _, _ in
         guard let source else {
           continuation.resume(returning: nil)
           return
         }
-        do {
-          try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-          let destination = directory.appendingPathComponent(name)
-          try FileManager.default.copyItem(at: source, to: destination)
-          continuation.resume(returning: destination)
-        } catch {
-          continuation.resume(returning: nil)
+        var stagedFile: URL?
+        var coordinationError: NSError?
+        NSFileCoordinator(filePresenter: nil).coordinate(
+          readingItemAt: source,
+          options: [],
+          error: &coordinationError
+        ) { coordinatedURL in
+          do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let destination = directory.appendingPathComponent(name)
+            try FileManager.default.copyItem(at: coordinatedURL, to: destination)
+            stagedFile = destination
+          } catch {
+            stagedFile = nil
+          }
         }
+        continuation.resume(returning: coordinationError == nil ? stagedFile : nil)
       }
     }
   }
