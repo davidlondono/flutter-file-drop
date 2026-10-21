@@ -33,6 +33,10 @@ tool/verify_workspace.sh
 
 Run native sample builds with the appropriate platform SDK. Track device and desktop validation using [`docs/validation.md`](docs/validation.md). Architecture choices are in [`docs/adr/`](docs/adr/).
 
+## Maintenance
+
+Dependency updates, CI cadence, security settings, and release guidance are in [`docs/maintenance.md`](docs/maintenance.md).
+
 ## Release
 
 Keep all seven package versions aligned. Publish the platform interface first, then the five implementation packages, then the façade. Run `dart pub publish --dry-run` in each package before publishing. Release order and compatibility policy are recorded in [ADR 0019](docs/adr/0019-release-policy.md).

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "enabledManagers": ["pub"],
+  "dependencyDashboard": true,
+  "timezone": "America/Bogota",
+  "schedule": ["before 5am on monday"],
+  "packageRules": [
+    {
+      "description": "Group non-major Dart and Flutter dependency updates.",
+      "matchManagers": ["pub"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "Dart and Flutter dependencies"
+    }
+  ]
+}
