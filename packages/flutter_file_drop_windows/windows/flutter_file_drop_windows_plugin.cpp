@@ -335,8 +335,10 @@ void FlutterFileDropWindowsPlugin::EmitLeave() {
 
 flutter::EncodableList FlutterFileDropWindowsPlugin::GetItems(
     IDataObject* data_object, const std::string& session_id, bool dropped) {
-  const CLIPFORMAT html_format = RegisterClipboardFormatW(L"HTML Format");
-  const CLIPFORMAT uri_format = RegisterClipboardFormatW(L"text/uri-list");
+  const CLIPFORMAT html_format =
+      static_cast<CLIPFORMAT>(RegisterClipboardFormatW(L"HTML Format"));
+  const CLIPFORMAT uri_format =
+      static_cast<CLIPFORMAT>(RegisterClipboardFormatW(L"text/uri-list"));
   const std::vector<CLIPFORMAT> formats = AvailableFormats(data_object);
   const bool has_file_drop = std::find(formats.begin(), formats.end(), CF_HDROP) != formats.end();
   flutter::EncodableList items;
