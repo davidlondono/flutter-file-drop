@@ -61,9 +61,9 @@ public class FlutterFileDropMacosPlugin: NSObject, FlutterPlugin, FlutterStreamH
     return true
   }
 
-  func readFileChunk(sessionId: String, handle: String, offset: Int64, maxBytes: Int64) async throws -> FlutterStandardTypedData? {
+  func readFileChunk(sessionId: String, fileHandle: String, offset: Int64, maxBytes: Int64) async throws -> FlutterStandardTypedData? {
     guard offset >= 0, maxBytes > 0, maxBytes <= 64 * 1024,
-          let url = files[sessionId]?[handle]?.0 else {
+          let url = files[sessionId]?[fileHandle]?.0 else {
       return nil
     }
     let file = try FileHandle(forReadingFrom: url)

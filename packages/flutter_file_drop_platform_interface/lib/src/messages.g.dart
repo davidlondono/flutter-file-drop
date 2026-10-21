@@ -74,7 +74,7 @@ class DropFileHostApi {
 
   Future<Uint8List?> readFileChunk(
     String sessionId,
-    String handle,
+    String fileHandle,
     int offset,
     int maxBytes,
   ) async {
@@ -86,7 +86,7 @@ class DropFileHostApi {
       binaryMessenger: pigeonVar_binaryMessenger,
     );
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(
-      <Object?>[sessionId, handle, offset, maxBytes],
+      <Object?>[sessionId, fileHandle, offset, maxBytes],
     );
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 

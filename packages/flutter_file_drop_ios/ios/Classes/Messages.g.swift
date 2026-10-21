@@ -98,7 +98,7 @@ class MessagesPigeonCodec: FlutterStandardMessageCodec, @unchecked Sendable {
 
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol DropFileHostApi {
-  func readFileChunk(sessionId: String, handle: String, offset: Int64, maxBytes: Int64) async throws -> FlutterStandardTypedData?
+  func readFileChunk(sessionId: String, fileHandle: String, offset: Int64, maxBytes: Int64) async throws -> FlutterStandardTypedData?
   func releaseSession(sessionId: String) async throws
 }
 
@@ -113,12 +113,12 @@ class DropFileHostApiSetup {
       readFileChunkChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
         let sessionIdArg = args[0] as! String
-        let handleArg = args[1] as! String
+        let fileHandleArg = args[1] as! String
         let offsetArg = args[2] as! Int64
         let maxBytesArg = args[3] as! Int64
         Task { @MainActor in
           do {
-            let result = try await api.readFileChunk(sessionId: sessionIdArg, handle: handleArg, offset: offsetArg, maxBytes: maxBytesArg)
+            let result = try await api.readFileChunk(sessionId: sessionIdArg, fileHandle: fileHandleArg, offset: offsetArg, maxBytes: maxBytesArg)
             reply(wrapResult(result))
           } catch {
             reply(wrapError(error))

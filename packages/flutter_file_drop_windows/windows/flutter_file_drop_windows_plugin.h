@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-#include "include/flutter_file_drop_windows/messages.g.h"
+#include "include/flutter_file_drop_windows/flutter_file_drop_windows_messages_g.h"
 
 namespace flutter_file_drop_windows {
 

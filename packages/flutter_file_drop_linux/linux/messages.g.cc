@@ -475,13 +475,13 @@ static void flutter_file_drop_linux_drop_file_host_api_read_file_chunk_cb(FlBasi
   FlValue* value0 = fl_value_get_list_value(message_, 0);
   const gchar* session_id = fl_value_get_string(value0);
   FlValue* value1 = fl_value_get_list_value(message_, 1);
-  const gchar* handle = fl_value_get_string(value1);
+  const gchar* file_handle = fl_value_get_string(value1);
   FlValue* value2 = fl_value_get_list_value(message_, 2);
   int64_t offset = fl_value_get_int(value2);
   FlValue* value3 = fl_value_get_list_value(message_, 3);
   int64_t max_bytes = fl_value_get_int(value3);
   g_autoptr(FlutterFileDropLinuxDropFileHostApiResponseHandle) handle = flutter_file_drop_linux_drop_file_host_api_response_handle_new(channel, response_handle);
-  self->vtable->read_file_chunk(session_id, handle, offset, max_bytes, handle, self->user_data);
+  self->vtable->read_file_chunk(session_id, file_handle, offset, max_bytes, handle, self->user_data);
 }
 
 static void flutter_file_drop_linux_drop_file_host_api_release_session_cb(FlBasicMessageChannel* channel, FlValue* message_, FlBasicMessageChannelResponseHandle* response_handle, gpointer user_data) {

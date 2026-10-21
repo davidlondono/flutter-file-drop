@@ -1,4 +1,5 @@
 import Flutter
+import MobileCoreServices
 import UniformTypeIdentifiers
 import UIKit
 
@@ -9,6 +10,8 @@ public class FlutterFileDropIosPlugin: NSObject, FlutterPlugin, FlutterStreamHan
   private var activeSessions: [ObjectIdentifier: String] = [:]
   private var files: [String: [String: URL]] = [:]
   private var sessionDirectories: [String: URL] = [:]
+  private let fileURLTypeIdentifier = "public.file-url"
+  private let folderTypeIdentifier = "public.folder"
 
   public static func register(with registrar: FlutterPluginRegistrar) {
     let instance = FlutterFileDropIosPlugin()
@@ -71,9 +74,9 @@ public class FlutterFileDropIosPlugin: NSObject, FlutterPlugin, FlutterStreamHan
     }
   }
 
-  func readFileChunk(sessionId: String, handle: String, offset: Int64, maxBytes: Int64) async throws -> FlutterStandardTypedData? {
+  func readFileChunk(sessionId: String, fileHandle: String, offset: Int64, maxBytes: Int64) async throws -> FlutterStandardTypedData? {
     guard offset >= 0, maxBytes > 0, maxBytes <= 64 * 1024,
-          let url = files[sessionId]?[handle] else {
+          let url = files[sessionId]?[fileHandle] else {
       return nil
     }
     let file = try FileHandle(forReadingFrom: url)
@@ -101,13 +104,13 @@ public class FlutterFileDropIosPlugin: NSObject, FlutterPlugin, FlutterStreamHan
   }
 
   private func isFileProvider(_ provider: NSItemProvider) -> Bool {
-    provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) ||
-      provider.hasItemConformingToTypeIdentifier(UTType.folder.identifier)
+    provider.hasItemConformingToTypeIdentifier(fileURLTypeIdentifier) ||
+      provider.hasItemConformingToTypeIdentifier(folderTypeIdentifier)
   }
 
   private func stringType(for provider: NSItemProvider) -> (identifier: String, mime: String)? {
     for identifier in provider.registeredTypeIdentifiers {
-      guard let mime = UTType(identifier)?.preferredMIMEType else { continue }
+      guard let mime = preferredMIMEType(for: identifier) else { continue }
       if ["text/plain", "text/html", "text/uri-list"].contains(mime.lowercased()) {
         return (identifier, mime.lowercased())
       }
@@ -115,11 +118,20 @@ public class FlutterFileDropIosPlugin: NSObject, FlutterPlugin, FlutterStreamHan
     return nil
   }
 
+  private func preferredMIMEType(for identifier: String) -> String? {
+    if #available(iOS 14.0, *) {
+      return UTType(identifier)?.preferredMIMEType
+    } else {
+      return UTTypeCopyPreferredTagWithClass(identifier as CFString, kUTTagClassMIMEType)?
+        .takeRetainedValue() as String?
+    }
+  }
+
   private func metadata(for provider: NSItemProvider) -> [String: Any] {
     var item: [String: Any] = ["type": "file"]
     if let name = provider.suggestedName { item["name"] = name }
     if let mime = provider.registeredTypeIdentifiers
-      .compactMap({ UTType($0)?.preferredMIMEType?.lowercased() })
+      .compactMap({ preferredMIMEType(for: $0)?.lowercased() })
       .first(where: { !$0.hasPrefix("text/") }) {
       item["mimeType"] = mime
     }
@@ -166,9 +178,9 @@ public class FlutterFileDropIosPlugin: NSObject, FlutterPlugin, FlutterStreamHan
           result.append(item)
           continue
         }
-        let identifier = provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier)
-          ? UTType.fileURL.identifier
-          : UTType.folder.identifier
+        let identifier = provider.hasItemConformingToTypeIdentifier(fileURLTypeIdentifier)
+          ? fileURLTypeIdentifier
+          : folderTypeIdentifier
         if let url = await loadFile(provider, typeIdentifier: identifier, to: directory, name: "file-\(index)"),
            let attributes = try? FileManager.default.attributesOfItem(atPath: url.path) {
           let handle = String(index)

@@ -20,7 +20,7 @@ G_DECLARE_FINAL_TYPE(FlutterFileDropLinuxDropFileHostApiResponseHandle, flutter_
  * Table of functions exposed by DropFileHostApi to be implemented by the API provider.
  */
 typedef struct {
-  void (*read_file_chunk)(const gchar* session_id, const gchar* handle, int64_t offset, int64_t max_bytes, FlutterFileDropLinuxDropFileHostApiResponseHandle* response_handle, gpointer user_data);
+  void (*read_file_chunk)(const gchar* session_id, const gchar* file_handle, int64_t offset, int64_t max_bytes, FlutterFileDropLinuxDropFileHostApiResponseHandle* response_handle, gpointer user_data);
   void (*release_session)(const gchar* session_id, FlutterFileDropLinuxDropFileHostApiResponseHandle* response_handle, gpointer user_data);
 } FlutterFileDropLinuxDropFileHostApiVTable;
 

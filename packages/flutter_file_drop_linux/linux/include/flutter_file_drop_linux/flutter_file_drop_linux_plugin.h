@@ -11,10 +11,8 @@ G_BEGIN_DECLS
 #define FLUTTER_PLUGIN_EXPORT
 #endif
 
-typedef struct _FlutterFileDropLinuxPlugin FlutterFileDropLinuxPlugin;
-typedef struct {
-  GObjectClass parent_class;
-} FlutterFileDropLinuxPluginClass;
+G_DECLARE_FINAL_TYPE(FlutterFileDropLinuxPlugin, flutter_file_drop_linux_plugin,
+                     FLUTTER_FILE_DROP, LINUX_PLUGIN, GObject)
 
 FLUTTER_PLUGIN_EXPORT GType flutter_file_drop_linux_plugin_get_type();
 

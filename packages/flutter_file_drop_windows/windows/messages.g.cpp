@@ -3,7 +3,7 @@
 
 #undef _HAS_EXCEPTIONS
 
-#include "include/flutter_file_drop_windows/messages.g.h"
+#include "flutter_file_drop_windows_messages_g.h"
 
 #include <flutter/basic_message_channel.h>
 #include <flutter/binary_messenger.h>
@@ -363,12 +363,12 @@ void DropFileHostApi::SetUp(
             return;
           }
           const auto& session_id_arg = std::get<std::string>(encodable_session_id_arg);
-          const auto& encodable_handle_arg = args.at(1);
-          if (encodable_handle_arg.IsNull()) {
-            reply(WrapError("handle_arg unexpectedly null."));
+          const auto& encodable_file_handle_arg = args.at(1);
+          if (encodable_file_handle_arg.IsNull()) {
+            reply(WrapError("file_handle_arg unexpectedly null."));
             return;
           }
-          const auto& handle_arg = std::get<std::string>(encodable_handle_arg);
+          const auto& file_handle_arg = std::get<std::string>(encodable_file_handle_arg);
           const auto& encodable_offset_arg = args.at(2);
           if (encodable_offset_arg.IsNull()) {
             reply(WrapError("offset_arg unexpectedly null."));
@@ -381,7 +381,7 @@ void DropFileHostApi::SetUp(
             return;
           }
           const int64_t max_bytes_arg = encodable_max_bytes_arg.LongValue();
-          api->ReadFileChunk(session_id_arg, handle_arg, offset_arg, max_bytes_arg, [reply](ErrorOr<std::optional<std::vector<uint8_t>>>&& output) {
+          api->ReadFileChunk(session_id_arg, file_handle_arg, offset_arg, max_bytes_arg, [reply](ErrorOr<std::optional<std::vector<uint8_t>>>&& output) {
             if (output.has_error()) {
               reply(WrapError(output.error()));
               return;

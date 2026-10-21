@@ -82,7 +82,7 @@ static FlValue* file_item(FlutterFileDropLinuxPlugin* self, const gchar* uri,
   map_set_string(item, "path", path);
   if (dropped && path != nullptr && !is_directory) {
     g_autofree gchar* handle = g_strdup_printf("%u", index);
-    if (g_access(path, R_OK) == 0) {
+    if (access(path, R_OK) == 0) {
       GHashTable* session_files = static_cast<GHashTable*>(g_hash_table_lookup(self->files, self->session_id));
       if (session_files == nullptr) {
         session_files = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
@@ -166,7 +166,7 @@ static FlMethodErrorResponse* stream_cancel_cb(FlEventChannel* channel,
   return nullptr;
 }
 
-static void read_file_chunk(const gchar* session_id, const gchar* handle,
+static void read_file_chunk(const gchar* session_id, const gchar* file_handle,
                             int64_t offset, int64_t max_bytes,
                             FlutterFileDropLinuxDropFileHostApiResponseHandle* response,
                             gpointer user_data) {
@@ -176,7 +176,7 @@ static void read_file_chunk(const gchar* session_id, const gchar* handle,
     return;
   }
   GHashTable* session_files = static_cast<GHashTable*>(g_hash_table_lookup(self->files, session_id));
-  const gchar* path = session_files == nullptr ? nullptr : static_cast<const gchar*>(g_hash_table_lookup(session_files, handle));
+  const gchar* path = session_files == nullptr ? nullptr : static_cast<const gchar*>(g_hash_table_lookup(session_files, file_handle));
   if (path == nullptr) {
     flutter_file_drop_linux_drop_file_host_api_respond_read_file_chunk(response, nullptr, 0);
     return;

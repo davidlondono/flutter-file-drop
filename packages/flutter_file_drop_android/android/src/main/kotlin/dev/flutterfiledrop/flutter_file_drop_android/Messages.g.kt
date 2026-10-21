@@ -65,7 +65,7 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
 
 /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
 interface DropFileHostApi {
-  suspend fun readFileChunk(sessionId: String, handle: String, offset: Long, maxBytes: Long): ByteArray?
+  suspend fun readFileChunk(sessionId: String, fileHandle: String, offset: Long, maxBytes: Long): ByteArray?
   suspend fun releaseSession(sessionId: String)
 
   companion object {
@@ -83,12 +83,12 @@ interface DropFileHostApi {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
             val sessionIdArg = args[0] as String
-            val handleArg = args[1] as String
+            val fileHandleArg = args[1] as String
             val offsetArg = args[2] as Long
             val maxBytesArg = args[3] as Long
             CoroutineScope(Dispatchers.Main).launch {
               val wrapped: List<Any?> = try {
-                listOf(api.readFileChunk(sessionIdArg, handleArg, offsetArg, maxBytesArg))
+                listOf(api.readFileChunk(sessionIdArg, fileHandleArg, offsetArg, maxBytesArg))
               } catch (exception: Throwable) {
                 MessagesPigeonUtils.wrapError(exception)
               }

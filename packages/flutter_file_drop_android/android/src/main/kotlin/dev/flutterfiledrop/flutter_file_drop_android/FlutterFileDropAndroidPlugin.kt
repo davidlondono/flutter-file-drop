@@ -242,9 +242,9 @@ class FlutterFileDropAndroidPlugin :
         )
     }
 
-    override suspend fun readFileChunk(sessionId: String, handle: String, offset: Long, maxBytes: Long): ByteArray? {
+    override suspend fun readFileChunk(sessionId: String, fileHandle: String, offset: Long, maxBytes: Long): ByteArray? {
         if (offset < 0 || maxBytes <= 0 || maxBytes > 64 * 1024) return null
-        val uri = files[sessionId]?.get(handle) ?: return null
+        val uri = files[sessionId]?.get(fileHandle) ?: return null
         val input = applicationContext.contentResolver.openInputStream(uri) ?: return null
         input.use { stream ->
             skipExactly(stream, offset)

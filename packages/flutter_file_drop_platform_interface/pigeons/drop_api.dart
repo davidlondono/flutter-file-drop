@@ -15,11 +15,11 @@ import 'package:pigeon/pigeon.dart';
       '../flutter_file_drop_macos/macos/flutter_file_drop_macos/Sources/flutter_file_drop_macos/Messages.g.swift',
     ],
     cppHeaderOut:
-        '../flutter_file_drop_windows/windows/include/flutter_file_drop_windows/messages.g.h',
+        '../flutter_file_drop_windows/windows/include/flutter_file_drop_windows/flutter_file_drop_windows_messages_g.h',
     cppSourceOut: '../flutter_file_drop_windows/windows/messages.g.cpp',
     cppOptions: CppOptions(
       namespace: 'flutter_file_drop_windows',
-      headerIncludePath: 'include/flutter_file_drop_windows/messages.g.h',
+      headerIncludePath: 'flutter_file_drop_windows_messages_g.h',
     ),
     gobjectHeaderOut:
         '../flutter_file_drop_linux/linux/include/flutter_file_drop_linux/messages.g.h',
@@ -35,7 +35,7 @@ abstract class DropFileHostApi {
   @async
   Uint8List? readFileChunk(
     String sessionId,
-    String handle,
+    String fileHandle,
     int offset,
     int maxBytes,
   );
