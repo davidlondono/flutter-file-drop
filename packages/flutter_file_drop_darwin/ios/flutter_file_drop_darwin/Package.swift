@@ -4,19 +4,19 @@
 import PackageDescription
 
 let package = Package(
-    name: "flutter_file_drop_ios",
+    name: "flutter_file_drop_darwin",
     platforms: [
         .iOS("13.0")
     ],
     products: [
-        .library(name: "flutter-file-drop-ios", targets: ["flutter_file_drop_ios"])
+        .library(name: "flutter-file-drop-darwin", targets: ["flutter_file_drop_darwin"])
     ],
     dependencies: [
         .package(name: "FlutterFramework", path: "../FlutterFramework")
     ],
     targets: [
         .target(
-            name: "flutter_file_drop_ios",
+            name: "flutter_file_drop_darwin",
             dependencies: [
                 .product(name: "FlutterFramework", package: "FlutterFramework")
             ],

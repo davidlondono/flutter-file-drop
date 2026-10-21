@@ -1,5 +1,5 @@
-name: flutter_file_drop_macos
-description: macOS implementation for flutter_file_drop.
+name: flutter_file_drop_darwin
+description: iOS and macOS implementation for flutter_file_drop.
 version: 0.1.0
 repository: https://github.com/davidlondono/flutter-file-drop
 issue_tracker: https://github.com/davidlondono/flutter-file-drop/issues
@@ -20,5 +20,7 @@ dev_dependencies:
 flutter:
   plugin:
     platforms:
+      ios:
+        pluginClass: FlutterFileDropIosPlugin
       macos:
         pluginClass: FlutterFileDropMacosPlugin

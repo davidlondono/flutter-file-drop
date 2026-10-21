@@ -79,7 +79,7 @@ See [`example/`](example) for a runnable sample.
 
 ## Platform packages
 
-This package endorses `flutter_file_drop_android`, `flutter_file_drop_ios`, `flutter_file_drop_macos`, `flutter_file_drop_windows`, `flutter_file_drop_linux`, and `flutter_file_drop_web`. Use the façade in application code. `flutter_file_drop_platform_interface` is for implementation authors.
+This package endorses `flutter_file_drop_android`, `flutter_file_drop_darwin`, `flutter_file_drop_windows`, `flutter_file_drop_linux`, and `flutter_file_drop_web`. Use the façade in application code. `flutter_file_drop_platform_interface` is for implementation authors.
 
 ## License
 

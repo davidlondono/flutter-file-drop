@@ -14,8 +14,7 @@ dependencies:
     sdk: flutter
   flutter_file_drop_platform_interface: ^0.1.0
   flutter_file_drop_android: ^0.1.0
-  flutter_file_drop_ios: ^0.1.0
-  flutter_file_drop_macos: ^0.1.0
+  flutter_file_drop_darwin: ^0.1.0
   flutter_file_drop_windows: ^0.1.0
   flutter_file_drop_linux: ^0.1.0
   flutter_file_drop_web: ^0.1.0
@@ -32,9 +31,9 @@ flutter:
       android:
         default_package: flutter_file_drop_android
       ios:
-        default_package: flutter_file_drop_ios
+        default_package: flutter_file_drop_darwin
       macos:
-        default_package: flutter_file_drop_macos
+        default_package: flutter_file_drop_darwin
       windows:
         default_package: flutter_file_drop_windows
       linux:

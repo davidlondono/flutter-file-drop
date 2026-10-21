@@ -10,9 +10,9 @@ import 'package:pigeon/pigeon.dart';
       package: 'dev.flutterfiledrop.flutter_file_drop_android',
     ),
     swiftOut: <String>[
-      '../flutter_file_drop_ios/ios/Classes/Messages.g.swift',
-      '../flutter_file_drop_ios/ios/flutter_file_drop_ios/Sources/flutter_file_drop_ios/Messages.g.swift',
-      '../flutter_file_drop_macos/macos/flutter_file_drop_macos/Sources/flutter_file_drop_macos/Messages.g.swift',
+      '../flutter_file_drop_darwin/ios/Classes/Messages.g.swift',
+      '../flutter_file_drop_darwin/ios/flutter_file_drop_darwin/Sources/flutter_file_drop_darwin/Messages.g.swift',
+      '../flutter_file_drop_darwin/macos/flutter_file_drop_darwin/Sources/flutter_file_drop_darwin/Messages.g.swift',
     ],
     cppHeaderOut:
         '../flutter_file_drop_windows/windows/include/flutter_file_drop_windows/flutter_file_drop_windows_messages_g.h',

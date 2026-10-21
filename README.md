@@ -9,8 +9,7 @@ Federated Flutter plugin for headless file and text drag-and-drop. `DropTarget` 
 | [`flutter_file_drop`](packages/flutter_file_drop/README.md) | Public API and endorsed platform registrations |
 | [`flutter_file_drop_platform_interface`](packages/flutter_file_drop_platform_interface/README.md) | Shared event and file-access contract |
 | [`flutter_file_drop_android`](packages/flutter_file_drop_android/README.md) | Android native plugin |
-| [`flutter_file_drop_ios`](packages/flutter_file_drop_ios/README.md) | iOS native plugin |
-| [`flutter_file_drop_macos`](packages/flutter_file_drop_macos/README.md) | macOS native plugin |
+| [`flutter_file_drop_darwin`](packages/flutter_file_drop_darwin/README.md) | iOS and macOS native plugins |
 | [`flutter_file_drop_windows`](packages/flutter_file_drop_windows/README.md) | Windows native plugin |
 | [`flutter_file_drop_linux`](packages/flutter_file_drop_linux/README.md) | Linux native plugin |
 | [`flutter_file_drop_web`](packages/flutter_file_drop_web/README.md) | Browser plugin |
@@ -36,6 +35,6 @@ Run native sample builds with the appropriate platform SDK. Track device and des
 
 ## Release
 
-Keep all eight package versions aligned. Publish the platform interface first, then the six implementations, then the façade. Run `dart pub publish --dry-run` in each package before publishing. Release order and compatibility policy are recorded in [ADR 0019](docs/adr/0019-release-policy.md).
+Keep all seven package versions aligned. Publish the platform interface first, then the five implementation packages, then the façade. Run `dart pub publish --dry-run` in each package before publishing. Release order and compatibility policy are recorded in [ADR 0019](docs/adr/0019-release-policy.md).
 
 BSD-3-Clause. See [LICENSE](LICENSE).
