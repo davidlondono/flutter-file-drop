@@ -82,7 +82,8 @@ public class FlutterFileDropIosPlugin: NSObject, FlutterPlugin, FlutterStreamHan
     let file = try FileHandle(forReadingFrom: url)
     defer { try? file.close() }
     try file.seek(toOffset: UInt64(offset))
-    guard let data = try file.read(upToCount: Int(maxBytes)), !data.isEmpty else {
+    let data = file.readData(ofLength: Int(maxBytes))
+    guard !data.isEmpty else {
       return nil
     }
     return FlutterStandardTypedData(bytes: data)
@@ -135,7 +136,7 @@ public class FlutterFileDropIosPlugin: NSObject, FlutterPlugin, FlutterStreamHan
       .first(where: { !$0.hasPrefix("text/") }) {
       item["mimeType"] = mime
     }
-    if provider.hasItemConformingToTypeIdentifier(UTType.folder.identifier) {
+    if provider.hasItemConformingToTypeIdentifier(folderTypeIdentifier) {
       item["isDirectory"] = true
     }
     return item
