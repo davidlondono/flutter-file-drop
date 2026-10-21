@@ -1,0 +1,9 @@
+name: flutter_file_drop_workspace
+publish_to: none
+
+environment:
+  sdk: ^3.12.0
+
+workspace:
+  - packages/*
+  - packages/flutter_file_drop/example

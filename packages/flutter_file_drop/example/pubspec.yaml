@@ -1,0 +1,25 @@
+name: example
+publish_to: none
+description: Example app for flutter_file_drop.
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.0
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_file_drop:
+    path: ..
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_file_drop_platform_interface:
+    path: ../../flutter_file_drop_platform_interface
+  plugin_platform_interface: ^2.1.8
+
+flutter:
+  uses-material-design: true

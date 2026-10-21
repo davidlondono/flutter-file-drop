@@ -1,0 +1,25 @@
+# Dart and Flutter
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+build/
+coverage/
+
+# Flutter generated platform files
+**/Flutter/ephemeral/
+**/Generated.xcconfig
+**/flutter_export_environment.sh
+**/local.properties
+**/.gradle/
+**/.kotlin/
+**/Pods/
+**/.symlinks/
+**/DerivedData/
+**/xcuserdata/
+
+# IDEs and operating systems
+.idea/
+*.iml
+.DS_Store

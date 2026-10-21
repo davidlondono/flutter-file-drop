@@ -1,0 +1,22 @@
+name: flutter_file_drop_platform_interface
+description: Platform interface for flutter_file_drop implementations.
+version: 0.1.0
+repository: https://github.com/davidlondono/flutter-file-drop
+issue_tracker: https://github.com/davidlondono/flutter-file-drop/issues
+
+environment:
+  sdk: ^3.12.0
+  flutter: '>=3.44.0'
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  meta: ^1.18.0
+  plugin_platform_interface: ^2.1.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  pigeon: ^29.0.11

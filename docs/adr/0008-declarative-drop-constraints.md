@@ -1,0 +1,3 @@
+# Use declarative drop constraints
+
+`DropTarget` will accept declarative constraints for item kinds, MIME types, filename extensions, `maxFiles`, and `maxFileSizeBytes`. Values within an allowlist use OR matching; configured constraint categories use AND matching. MIME types and extensions match case-insensitively. MIME type wildcards such as `image/*` are supported. A missing allowlist adds no restriction; an empty allowlist rejects all applicable items. Extension matching uses the source filename; MIME matching uses source-declared metadata. The package does not sniff content. The package will not accept a custom screening callback. Content inspection remains application-owned. See [ADR 0016](0016-screening-match-rules.md).

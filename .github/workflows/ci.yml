@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  dart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.2'
+          channel: stable
+      - run: tool/verify_workspace.sh
+
+  native-builds:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: android
+            os: ubuntu-latest
+          - platform: web
+            os: ubuntu-latest
+          - platform: linux
+            os: ubuntu-latest
+          - platform: windows
+            os: windows-latest
+          - platform: macos
+            os: macos-latest
+          - platform: ios-simulator
+            os: macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.2'
+          channel: stable
+      - if: matrix.platform == 'android'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+      - run: flutter pub get
+      - if: matrix.platform == 'android'
+        run: flutter build apk --debug
+        working-directory: packages/flutter_file_drop/example
+      - if: matrix.platform == 'web'
+        run: flutter build web --release
+        working-directory: packages/flutter_file_drop/example
+      - if: matrix.platform == 'linux'
+        run: flutter build linux --debug
+        working-directory: packages/flutter_file_drop/example
+      - if: matrix.platform == 'windows'
+        run: flutter build windows --debug
+        working-directory: packages/flutter_file_drop/example
+      - if: matrix.platform == 'macos'
+        run: flutter build macos --debug
+        working-directory: packages/flutter_file_drop/example
+      - if: matrix.platform == 'ios-simulator'
+        run: flutter pub get
+        working-directory: packages/flutter_file_drop/example
+      - if: matrix.platform == 'ios-simulator'
+        run: xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' BUILD_DIR="$PWD/../build/ios" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO 'CODE_SIGNING_IDENTITY=' COMPILER_INDEX_STORE_ENABLE=NO ARCHS=arm64
+        working-directory: packages/flutter_file_drop/example/ios

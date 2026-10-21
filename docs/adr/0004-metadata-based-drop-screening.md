@@ -1,0 +1,3 @@
+# Screen metadata; leave content validation to apps
+
+Version 1 will provide declarative item-type, MIME, extension, file-count, and size screening. Preflight screening is best-effort and uses metadata available during preview; apply final screening after drop when preview metadata is missing. A batch may be partially accepted: deliver accepted items and report every applicable reason for each rejected item. The package does not verify file contents, which remain application-defined. Limit semantics are recorded in [ADR 0006](0006-file-screening-limits.md), and rejection details in [ADR 0009](0009-per-item-rejection-results.md).
